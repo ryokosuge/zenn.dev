@@ -1,0 +1,18 @@
+{
+  "name": "zenn.dev",
+  "version": "1.0.0",
+  "description": "zenn.dev ryokosuge",
+  "repository": "ssh://git@github.com/ryokosuge/zenn.dev.git",
+  "author": "ryokosuge <ryo.kosuge@gmail.com>",
+  "license": "NOLICENSE",
+  "private": true,
+  "dependencies": {
+    "zenn-cli": "^0.1.21"
+  },
+  "scripts": {
+    "init": "zenn init",
+    "preview": "zenn preview",
+    "new:article": "zenn new:article",
+    "new:book": "new:book"
+  }
+}
