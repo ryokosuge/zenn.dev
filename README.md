@@ -1,15 +1,37 @@
 # zenn.dev
 
-To install dependencies:
+このリポジトリは、Zenn.dev向けの記事、書籍、その他のコンテンツを管理するためのものです。Zenn CLIを使用して、コンテンツの作成、プレビュー、管理を効率的に行います。
+
+## 使用方法
+
+### 記事のプレビュー
+
+ローカルで記事をプレビューするには、以下のコマンドを使用してください：
 
 ```bash
-bun install
+bun run zenn:preview
 ```
 
-To run:
+### 新しい記事の作成
+
+新しい記事を作成するには、以下のコマンドを実行してください：
+
+```bash
+bun run zenn:build:article
+```
+
+### プロジェクトの実行
+
+プロジェクトを開始するには、以下を実行してください：
 
 ```bash
 bun run index.ts
 ```
 
-This project was created using `bun init` in bun v1.2.9. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## 開発環境
+
+このプロジェクトには、Dockerを使用した開発コンテナのセットアップが含まれています。このコンテナは、Bunやその他の必要なツールをインストールし、一貫した開発環境を提供します。使用するには、Dockerがインストールされていることを確認し、提供された設定を使用してコンテナを起動してください。
+
+## その他の情報
+
+このプロジェクトは`bun init`を使用して作成されており、Zenn CLIとシームレスに連携するように設計されています。Zennの詳細については、[Zenn.dev](https://zenn.dev)をご覧ください。
