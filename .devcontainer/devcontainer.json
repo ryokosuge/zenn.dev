@@ -1,0 +1,22 @@
+{
+    "name": "dev",
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "args": {
+            "BUN_VERSION": "1.2.9"
+        }
+    },
+    "postCreateCommand": "bun install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "oderwat.indent-rainbow",
+                "mushan.vscode-paste-image",
+                "yzhang.markdown-all-in-one"
+            ]
+        }
+    },
+    "forwardPorts": [
+        8000
+    ]
+}

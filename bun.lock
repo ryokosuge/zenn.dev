@@ -1,0 +1,14 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "zenn.dev",
+      "dependencies": {
+        "zenn-cli": "0.1.158",
+      },
+    },
+  },
+  "packages": {
+    "zenn-cli": ["zenn-cli@0.1.158", "", { "bin": { "zenn": "dist/server/zenn.js" } }, "sha512-bvQ96fK+9qw+SKxEmncg/rYU+1u0V6Bh+HuV8By+u4L+VZt/jn9hFyL+KWj/2ncSBDtcEBo6XLsCdNLxlUo+RA=="],
+  }
+}
