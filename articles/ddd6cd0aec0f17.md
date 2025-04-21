@@ -1,8 +1,8 @@
 ---
-title: "AppsFlyerに送るイベントのパラメーターがnullになっていた問題に対応した"
+title: "AndroidでAppsFlyerに送るイベントのパラメーターがnullになっていた問題に対応した"
 emoji: "📑"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["Android", "AppsFlyer"]
+topics: ["Android", "AppsFlyer", "Kotlin"]
 published: false
 ---
 
@@ -10,7 +10,7 @@ published: false
 
 みてねのCREグループでエンジニアをしているこすげです。
 
-この記事ではAppsFlyerに送っているイベントのパラメーターのvalueが全てnullになっていて計測できていない問題に気がつき、対応したことについて書きました。
+この記事では、AndroidアプリのKotlinコードでAppsFlyerに送信しているイベントのパラメーターが、not-nullであるはずなのに管理画面上でnullになってしまう問題に気がつき、対応したことについて書きました。
 
 同じような問題に直面している人だったり、同じような実装をしている人の気づきになれたらいいなと思います。
 
@@ -34,9 +34,7 @@ CREグループとしてもAppsFlyerの実装依頼は初めてで現状の把�
 
 それがイベント送信はされているけど、パラメーターがnullになってしまっていて、計上されていないという点でした。
 
-コード上は問題なさそう、もし仮にパラメーターとして送る際に参照している値がnullになっている場合、後続の処理が実行されず致命的な不具合を起こすものでした。
-
-ただ、そういったお問い合わせは特になくnullな状態であることは考えられない、けど実際にAppsFlyerの管理画面で見るとnullになってしまっているという状態でした。
+コード上では、AppsFlyerに送信しているデータの型はnot-nullで、nullになり得ないはずでした。しかし、実際にAppsFlyerの管理画面で見るとnullになってしまっているという状態でした。
 
 ```json
 {
@@ -78,19 +76,17 @@ CREグループとしてもAppsFlyerの実装依頼は初めてで現状の把�
 
 ```mermaid
 flowchart TD
-    A[イベント発火ポイントに到達]
-    B[イベント名とパラメーターをjsonにencode]
-    C[jsonをイベント取りまとめクラスに渡す]
-    D[まとめるクラスで処理しポストバック]
-    E[ポストバック先でjsonを構造体にdecode]
-    F[decodeしたものをAppsFlyerに送信]
+    A[イベント名とパラメーターをjsonにencode]
+    B[複数分析サービスへイベント通知をまとめるクラスの通知処理を実行]
+    C[jsonをdecode]
+    D[decodeしたdata classをAppsFlyerに送信]
 
-    A --> B --> C --> D --> E --> F
+    A --> B --> C --> D
 ```
 
 jsonをencodeしてdecodeしてるところが怪しいかなと思いつつ、上記の全てのpointでprint debugしましたが、どこの時点でもnullになっていませんでした。
 
-イベント名とパラメーターをまとめた構造体は以下のようにしています（だいぶサンプルです）
+イベント名とパラメーターをまとめたdata classは以下のようにしています（だいぶサンプルです）
 
 ```kotlin
 @Serializable
@@ -103,12 +99,23 @@ data class EventData(
 どこで見てもnullにはならないのですが、アプリのログを見るとAppsFlyerのSDKがHTTPリクエストを送信してるログではnullになっています。
 
 ```shell
-xxx-xx-xx xx:xx:xx.xxx  1234-5678  AppsFlyer_6.16.2        com.example.development                I  [Other] INAPP-11: preparing data: {...だいぶ省略...,"eventValue":"{\"key\":null,\"hoge\":null,\"fuga\":null}",...だいぶ省略...}
+xxx-xx-xx xx:xx:xx.xxx  1234-5678  AppsFlyer_6.16.2        com.example.development
+I  [Other] INAPP-11: preparing data: {"eventValue":"{\"key\":null,\"hoge\":null,\"fuga\":null}"}
 ```
 
 AppsFlyerSDKのコードは公開されていないので、どのようなデコード処理をしているかわかりませんでした...。
 
 ただAppsFlyerSDKに送るところまではしっかり情報が残っていることがわかったので、AppsFlyerSDKに渡すパラメーターを調整すれば良さそうなことがわかりました。
+
+### 問題の原因
+
+今回の問題の原因を深掘りすると、以下のようなことがわかりました。
+
+- `JsonObject` はkotlin-serializationが定義する型で、`Map<String, Any>` として取り扱えるように定義されている。
+- AppsFlyerへイベントを通知するメソッドは `Map<String, Object>` を引数として受け取るように定義されている。
+- アプリ内で用意している `params: JsonObject` をそのまま渡すと、AppsFlyerは `JsonObject` 型を知らないため、内部でマップを展開した際に値を復元できずnullになってしまっていた。
+
+つまり、ライブラリが `Object` 型を受け取るようなメソッドの場合、Kotlinで定義している型が適切に渡せているかを確認する必要があるということです。
 
 ### どういったデータを渡したらnullにならないか
 
@@ -125,7 +132,8 @@ appsFlyerLibはAppsFlyerSDKが用意してくれているものですが、 logE
 上記のように `mapOf()` で渡したところ以下のようにログが出ました。
 
 ```shell
-xxx-xx-xx xx:xx:xx.xxx  1234-5678  AppsFlyer_6.16.2        com.example.development                I  [Other] INAPP-11: preparing data: {...だいぶ省略...,"eventValue":"{\"test_key\":\"test_value\"}"...だいぶ省略...}
+xxx-xx-xx xx:xx:xx.xxx  1234-5678  AppsFlyer_6.16.2        com.example.development
+I  [Other] INAPP-11: preparing data: {"eventValue":"{\"test_key\":\"test_value\"}"}
 ```
 
 しっかり `test_value` が送られていることがわかりました。
