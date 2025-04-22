@@ -3,7 +3,7 @@ title: "AndroidでAppsFlyerに送るイベントのパラメーターがnullに�
 emoji: "📑"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["Android", "AppsFlyer", "Kotlin"]
-published: false
+published: true
 ---
 
 ## はじめに
